@@ -14,7 +14,7 @@ export const patientSchema = {
       errorMessage: "Date of birth is required",
     },
     isDate: {
-      options:{
+      options: {
         format: "YYYY-MM-DD",
         strictMode: true,
       },
@@ -43,14 +43,40 @@ export const patientSchema = {
       options: ["en-IN"],
     },
   },
-  emergencyContactNo: {
+  emergencyContact: {
     notEmpty: {
-      message: "Emergency contact number is required",
+      errorMessage: "Emergency contact is required",
+    },
+    isObject: {
+      errorMessage: "Emergency contact must be an object",
+    },
+  },
+  "emergencyContact.name": {
+    notEmpty: {
+      errorMessage: "Emergency contact name is required",
+    },
+    isString: {
+      errorMessage: "Emergency contact name must be a string",
+    },
+  },
+  "emergencyContact.number": {
+    notEmpty: {
+      errorMessage: "Emergency contact number is required",
     },
     isNumeric: true,
     isMobilePhone: {
-      errorMessage: "Emergency contact number must be a valid Indian mobile number",
+      errorMessage:
+        "Emergency contact number must be a valid Indian mobile number",
       options: ["en-IN"],
+    },
+  },
+  "emergencyContact.relationshipWithPatient": {
+    notEmpty: {
+      errorMessage: "Emergency contact relationship with patient is required",
+    },
+    isString: {
+      errorMessage:
+        "Emergency contact relationship with patient must be a string",
     },
   },
   sessionPrice: {
