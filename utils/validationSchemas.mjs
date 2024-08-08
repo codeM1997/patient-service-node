@@ -1,5 +1,3 @@
-import e from "express";
-
 export const patientSchema = {
   name: {
     notEmpty: {
@@ -85,6 +83,35 @@ export const patientSchema = {
     },
     notEmpty: {
       errorMessage: "Session price is required",
+    },
+  },
+};
+
+export const adminSchema = {
+  username: {
+    notEmpty: {
+      errorMessage: "Name is required",
+    },
+    isString: {
+      errorMessage: "Name must be a string",
+    },
+  },
+  password: {
+    notEmpty: {
+      errorMessage: "Password is required",
+    },
+    isString: {
+      errorMessage: "Password must be a string",
+    },
+    isStrongPassword: {
+      errorMessage: "Password must be strong",
+      options: {
+        minLength: 8,
+        maxLength: 20,
+        minUppercase: 1,
+        minSymbols: 1,
+        minNumbers: 1,
+      },
     },
   },
 };

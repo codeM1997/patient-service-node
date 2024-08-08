@@ -38,6 +38,8 @@ const PatientSchema = new Schema({
       required: true,
     },
   },
+},{
+  timestamps: true,
 });
 
 const Patient = mongoose.model("Patient", PatientSchema);
