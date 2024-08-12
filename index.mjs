@@ -4,9 +4,10 @@ import baseRouter from "./routers/index.mjs";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import MongoStore from "connect-mongo";
-const app = express();
 import passport from "passport";
 import "./strategies/local-strategy.mjs";
+import authRouter from "./routers/auth.mjs";
+const app = express();
 mongoose
   .connect("mongodb://localhost:27017/patient-service-node")
   .then(() => {
@@ -34,26 +35,11 @@ app.use(express.json());
 app.get("/", (req, res) => {
   return res.send("Hello World!");
 });
-app.post("/api/auth", passport.authenticate("local"), (req, res) => {
-  console.log("Req user in auth", req.user);
-  return res.send("Auth success");
-});
-app.get("/api/auth/status", (req, res) => {
-  console.log(">", req.session);
-  console.log(req.user);
-  return req.user
-    ? res.status(200).send(req.user)
-    : res.status(401).send({ msg: "User not authenticated" });
-});
-app.post("/api/auth/logout", (req, res) => {
-  if (!req.user) return res.status(401).send({ msg: "User not authenticated" });
-  req.logout((err) => {
-    if (err) return res.sendStatus(400);
-    return res.status(200).send({ msg: "User logged out" });
-  });
-});
+app.use("/api/auth", authRouter);
 app.use((req, res, next) => {
-  if(!req.user) return res.status(401).send({ msg: "User not authenticated" });
+  console.log('req.path', req.path);
+  if(req.path.includes("/api/admins")) return next();
+  if (!req.user) return res.status(401).send({ msg: "User not authenticated" });
   next();
 });
 app.use("/api", baseRouter);
