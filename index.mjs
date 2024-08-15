@@ -7,9 +7,11 @@ import MongoStore from "connect-mongo";
 import passport from "passport";
 import "./strategies/local-strategy.mjs";
 import authRouter from "./routers/auth.mjs";
+import { createPdf } from "./utils/helpers.mjs";
+import { invoice } from "./utils/data.mjs";
 const app = express();
 mongoose
-  .connect("mongodb://localhost:27017/patient-service-node")
+  .connect("mongodb://127.0.0.1:27017/patient-service-node")
   .then(() => {
     console.log("Connected to MongoDB");
   })
@@ -35,10 +37,21 @@ app.use(express.json());
 app.get("/", (req, res) => {
   return res.send("Hello World!");
 });
+app.get("/downloadpdf", async (req, res) => {
+  const stream = res.writeHead(200, {
+    "Content-Type": "application/pdf",
+    "Content-Disposition": `attachment;filename=invoice.pdf`,
+  });
+  createPdf(
+    invoice,
+    (chunk) => stream.write(chunk),
+    () => stream.end()
+  );
+});
 app.use("/api/auth", authRouter);
 app.use((req, res, next) => {
-  console.log('req.path', req.path);
-  if(req.path.includes("/api/admins")) return next();
+  console.log("req.path", req.path);
+  if (req.path.includes("/api/admins")) return next();
   if (!req.user) return res.status(401).send({ msg: "User not authenticated" });
   next();
 });
