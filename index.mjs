@@ -9,7 +9,12 @@ import "./strategies/local-strategy.mjs";
 import authRouter from "./routers/auth.mjs";
 import { createPdf } from "./utils/helpers.mjs";
 import { invoice } from "./utils/data.mjs";
+import cors from "cors";
+const corsOptions = {
+  origin: "*",
+};
 const app = express();
+app.use(cors(corsOptions));
 mongoose
   .connect("mongodb://127.0.0.1:27017/patient-service-node")
   .then(() => {
