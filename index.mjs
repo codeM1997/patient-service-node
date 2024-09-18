@@ -11,7 +11,8 @@ import { createPdf } from "./utils/helpers.mjs";
 import { invoice } from "./utils/data.mjs";
 import cors from "cors";
 const corsOptions = {
-  origin: "*",
+  origin: "http://localhost:3000",
+  credentials: true,
 };
 const app = express();
 app.use(cors(corsOptions));
@@ -26,8 +27,9 @@ mongoose
 app.use(cookieParser("some-secret-key"));
 app.use(
   session({
+    httpOnly: true,
     secret: "some-secret-key",
-    cookie: { maxAge: 1000 * 60 * 5 },
+    cookie: { sameSite: "none", secure: false, maxAge: 1000 * 60 * 5 },
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ client: mongoose.connection.getClient() }),
