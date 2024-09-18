@@ -29,7 +29,7 @@ app.use(
   session({
     httpOnly: true,
     secret: "some-secret-key",
-    cookie: { sameSite: "none", secure: false, maxAge: 1000 * 60 * 5 },
+    cookie: { sameSite: "none", secure: false, maxAge: 5000 * 60 * 5 },
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ client: mongoose.connection.getClient() }),
