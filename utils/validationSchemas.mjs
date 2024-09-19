@@ -27,7 +27,7 @@ export const patientSchema = {
       errorMessage: "Gender must be a string",
     },
     isIn: {
-      options: ["male", "female", "other"],
+      options: [["male", "female", "trans", "other"]],
       errorMessage: "Gender must be one of male, female or other",
     },
   },
