@@ -33,7 +33,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ client: mongoose.connection.getClient() }),
-  })
+  }),
 );
 app.use(passport.initialize());
 app.use(passport.session());
@@ -45,14 +45,38 @@ app.get("/", (req, res) => {
   return res.send("Hello World!");
 });
 app.get("/downloadpdf", async (req, res) => {
+  console.log("req.body", req);
+  const {
+    doctorName,
+    doctorNumber,
+    doctorDesignation,
+    doctorSubtext,
+    patientId,
+  } = ({
+    doctorName = "Dr John Doe",
+    doctorNumber = "9999999999",
+    doctorDesignation = "Dentist",
+    doctorSubtext = "Something Degree",
+    patientId = "1",
+  } = req.body);
   const stream = res.writeHead(200, {
     "Content-Type": "application/pdf",
     "Content-Disposition": `attachment;filename=invoice.pdf`,
   });
+  const updatedInvoiceDetails = {
+    ...invoice,
+    docDetails: {
+      doctorName,
+      doctorNumber,
+      doctorDesignation,
+      doctorSubtext,
+    },
+    patientId,
+  };
   createPdf(
-    invoice,
+    updatedInvoiceDetails,
     (chunk) => stream.write(chunk),
-    () => stream.end()
+    () => stream.end(),
   );
 });
 app.use("/api/auth", authRouter);

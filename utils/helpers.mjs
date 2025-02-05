@@ -12,12 +12,11 @@ export const comparePassword = (password, hash) => {
   return bcrypt.compareSync(password, hash);
 };
 
-
 export const createPdf = (invoice, dataCallback, endCallback) => {
   let doc = new PDFDocument({ size: "A4", margin: 50, bufferPages: true });
   doc.on("data", dataCallback);
   doc.on("end", endCallback);
-  generateHeader(doc);
+  generateHeader(doc, invoice.docDetails);
   generateCustomerInformation(doc, invoice);
   generateInvoiceTable(doc, invoice);
   generateFooter(doc);
@@ -25,18 +24,19 @@ export const createPdf = (invoice, dataCallback, endCallback) => {
   doc.end();
 };
 
-function generateHeader(doc) {
+function generateHeader(doc, docDetails) {
   const logoBuffer = Buffer.from(logoImage, "base64");
-
+  const { doctorName, doctorNumber, doctorDesignation, doctorSubtext } =
+    docDetails;
   doc
     .image(logoBuffer, 50, 45, { width: 50 })
     .fillColor("#444444")
     .fontSize(20)
-    .text("Rashika Sharma", 110, 57)
+    .text(doctorName, 110, 57)
     .fontSize(10)
-    .text("9971643530", 200, 50, { align: "right" })
-    .text("Clinical Psychologist", 200, 65, { align: "right" })
-    .text("M.Phil in Clinical Psychology", 200, 80, { align: "right" })
+    .text(doctorNumber, 200, 50, { align: "right" })
+    .text(doctorDesignation, 200, 65, { align: "right" })
+    .text(doctorSubtext, 200, 80, { align: "right" })
     .moveDown();
 }
 
@@ -56,11 +56,7 @@ function generateCustomerInformation(doc, invoice) {
     .text("Invoice Date:", 50, customerInformationTop + 15)
     .text(formatDate(new Date()), 150, customerInformationTop + 15)
     .text("Balance Due:", 50, customerInformationTop + 30)
-    .text(
-      formatCurrency(invoice.subtotal - invoice.paid),
-      150,
-      customerInformationTop + 30
-    )
+    .text(formatCurrency(invoice.subtotal), 150, customerInformationTop + 30)
 
     .font("Helvetica-Bold")
     .text(invoice.shipping.name, 300, customerInformationTop)
@@ -73,7 +69,7 @@ function generateCustomerInformation(doc, invoice) {
         ", " +
         invoice.shipping.country,
       300,
-      customerInformationTop + 30
+      customerInformationTop + 30,
     )
     .moveDown();
 
@@ -92,7 +88,7 @@ function generateInvoiceTable(doc, invoice) {
     "Description",
     "Unit Cost",
     "Quantity",
-    "Line Total"
+    "Line Total",
   );
   generateHr(doc, invoiceTableTop + 20);
   doc.font("Helvetica");
@@ -107,7 +103,7 @@ function generateInvoiceTable(doc, invoice) {
       item.description,
       formatCurrency(item.amount / item.quantity),
       item.quantity,
-      formatCurrency(item.amount)
+      formatCurrency(item.amount),
     );
 
     generateHr(doc, position + 20);
@@ -121,7 +117,7 @@ function generateInvoiceTable(doc, invoice) {
     "",
     "Subtotal",
     "",
-    formatCurrency(invoice.subtotal)
+    formatCurrency(invoice.subtotal),
   );
 
   const paidToDatePosition = subtotalPosition + 20;
@@ -132,7 +128,7 @@ function generateInvoiceTable(doc, invoice) {
     "",
     "Paid To Date",
     "",
-    formatCurrency(invoice.paid)
+    formatCurrency(invoice.paid),
   );
 
   const duePosition = paidToDatePosition + 25;
@@ -144,7 +140,7 @@ function generateInvoiceTable(doc, invoice) {
     "",
     "Balance Due",
     "",
-    formatCurrency(invoice.subtotal - invoice.paid)
+    formatCurrency(invoice.subtotal - invoice.paid),
   );
   doc.font("Helvetica");
 }
@@ -156,7 +152,7 @@ function generateFooter(doc) {
       "Payment is due within 15 days. Thank you for your business.",
       50,
       780,
-      { align: "center", width: 500 }
+      { align: "center", width: 500 },
     );
 }
 
@@ -167,7 +163,7 @@ function generateTableRow(
   description,
   unitCost,
   quantity,
-  lineTotal
+  lineTotal,
 ) {
   doc
     .fontSize(10)
