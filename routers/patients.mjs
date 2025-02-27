@@ -2,7 +2,7 @@ import { Router } from "express";
 import { checkSchema, validationResult } from "express-validator";
 import { patientSchema } from "../utils/validationSchemas.mjs";
 import Patient from "../mongoose/patientSchema.mjs";
-
+import socket from "../index.mjs";
 const router = Router();
 
 router.get("/", async (req, res) => {
@@ -38,6 +38,9 @@ router.post("/", checkSchema(patientSchema), async (req, res) => {
   const newPatient = new Patient(req.body);
   try {
     const savedPatient = await newPatient.save();
+    socket.emit("patient-created", savedPatient);
+    console.log('????');
+
     return res
       .status(201)
       .send({ message: "Patient created successfully", data: savedPatient });

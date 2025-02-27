@@ -1,5 +1,5 @@
 import express from "express";
-import mongoose from "mongoose";
+import mongoose, { set } from "mongoose";
 import baseRouter from "./routers/index.mjs";
 import cookieParser from "cookie-parser";
 import session from "express-session";
@@ -9,6 +9,7 @@ import "./strategies/local-strategy.mjs";
 import authRouter from "./routers/auth.mjs";
 import { createPdf } from "./utils/helpers.mjs";
 import { invoice } from "./utils/data.mjs";
+import { Server } from "socket.io";
 import cors from "cors";
 const corsOptions = {
   origin: "http://localhost:3000",
@@ -16,6 +17,23 @@ const corsOptions = {
 };
 const app = express();
 app.use(cors(corsOptions));
+
+// create a socket connection on port 1997 to listen for incoming messages and on first connection send a message to the client that connection has been established
+const io = new Server(1997, {
+  cors: {
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST"],
+  },
+});
+io.on("connection", (socket) => {
+  console.log("Socket connection established",socket.id);
+  socket.emit("connection-established",socket.id);
+  setTimeout(() => {
+    socket.emit("connection-established-timeout",socket.id);
+  }, 5000);
+});
+
+
 mongoose
   .connect("mongodb://127.0.0.1:27017/patient-service-node")
   .then(() => {
@@ -63,3 +81,5 @@ app.use((req, res, next) => {
   next();
 });
 app.use("/api", baseRouter);
+
+export default io;
