@@ -16,7 +16,6 @@ export const invoice = {
     },
   ],
   subtotal: 6000,
-  paid: 0,
   invoice_nr: 1234,
 };
 export const logoImage =
