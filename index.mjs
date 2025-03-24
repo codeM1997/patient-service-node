@@ -11,8 +11,13 @@ import { createPdf } from "./utils/helpers.mjs";
 import { invoice } from "./utils/data.mjs";
 import { Server } from "socket.io";
 import cors from "cors";
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
+
 const corsOptions = {
-  origin: "http://localhost:3000",
+  origin: process.env.CLIENT_URL || "http://localhost:3000",
   credentials: true,
 };
 const app = express();
@@ -22,32 +27,38 @@ app.use(cors(corsOptions));
 const io = new Server(1997, {
   cors: {
     origin: "http://localhost:3000",
-    methods: ["GET", "POST"],
+     methods: ["GET", "POST"],
   },
 });
 io.on("connection", (socket) => {
   console.log("Socket connection established",socket.id);
   socket.emit("connection-established",socket.id);
-  setTimeout(() => {
-    socket.emit("connection-established-timeout",socket.id);
-  }, 5000);
+  // setTimeout(() => {
+  //   socket.emit("connection-established-timeout",socket.id);
+  // }, 5000);
 });
 
+// MongoDB Atlas connection string from environment variable
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/patient-service-node";
 
 mongoose
-  .connect("mongodb://127.0.0.1:27017/patient-service-node")
+  .connect(MONGODB_URI)
   .then(() => {
     console.log("Connected to MongoDB");
   })
   .catch((err) => {
     console.log("Error connecting to MongoDB", err);
   });
-app.use(cookieParser("some-secret-key"));
+app.use(cookieParser(process.env.COOKIE_SECRET || "some-secret-key"));
 app.use(
   session({
     httpOnly: true,
-    secret: "some-secret-key",
-    cookie: { sameSite: "none", secure: false, maxAge: 5000 * 60 * 5 },
+    secret: process.env.SESSION_SECRET || "some-secret-key",
+    cookie: { 
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 5000 * 60 * 5 
+    },
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ client: mongoose.connection.getClient() }),
@@ -62,27 +73,46 @@ app.use(express.json());
 app.get("/", (req, res) => {
   return res.send("Hello World!");
 });
-app.get("/downloadpdf", async (req, res) => {
-  console.log("req.body", req);
+app.post("/downloadpdf", async (req, res) => {
   const {
-    doctorName,
-    doctorNumber,
-    doctorDesignation,
-    doctorSubtext,
-    patientId,
-  } = ({
-    doctorName = "Dr John Doe",
-    doctorNumber = "9999999999",
-    doctorDesignation = "Dentist",
-    doctorSubtext = "Something Degree",
-    patientId = "1",
-  } = req.body);
+    doctorName = 'John',
+    doctorNumber = '123',
+    doctorDesignation = 'Psychologist',
+    doctorSubtext = 'Clinical Psychologist',
+    patientId = "12",
+    patientName = "John Doe",
+    patientAddress = "1234 Main Street",
+    patientCity = "San Francisco",
+    patientState = "CA",
+    patientCountry = "US",
+    patientPostalCode = "94111",
+    items = [{
+      item: "Counselling Services",
+      description: "Psychological Counselling",
+      quantity: 1,
+      amount: 6000
+    }],
+    subtotal = 6000,
+    invoice_nr = 1234
+  } = req.body;
+
   const stream = res.writeHead(200, {
     "Content-Type": "application/pdf",
     "Content-Disposition": `attachment;filename=invoice.pdf`,
   });
+
   const updatedInvoiceDetails = {
-    ...invoice,
+    shipping: {
+      name: patientName,
+      address: patientAddress,
+      city: patientCity,
+      state: patientState,
+      country: patientCountry,
+      postal_code: patientPostalCode,
+    },
+    items,
+    subtotal,
+    invoice_nr,
     docDetails: {
       doctorName,
       doctorNumber,
@@ -91,6 +121,7 @@ app.get("/downloadpdf", async (req, res) => {
     },
     patientId,
   };
+
   createPdf(
     updatedInvoiceDetails,
     (chunk) => stream.write(chunk),
@@ -105,5 +136,4 @@ app.use((req, res, next) => {
   next();
 });
 app.use("/api", baseRouter);
-
 export default io;

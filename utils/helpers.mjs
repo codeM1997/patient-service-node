@@ -57,90 +57,72 @@ function generateCustomerInformation(doc, invoice) {
     .text(formatDate(new Date()), 150, customerInformationTop + 15)
     .text("Balance Due:", 50, customerInformationTop + 30)
     .text(formatCurrency(invoice.subtotal), 150, customerInformationTop + 30)
-
     .font("Helvetica-Bold")
-    .text(invoice.shipping.name, 300, customerInformationTop)
+    .text("For:", 300, customerInformationTop)
     .font("Helvetica")
-    .text(invoice.shipping.address, 300, customerInformationTop + 15)
-    .text(
-      invoice.shipping.city +
-        ", " +
-        invoice.shipping.state +
-        ", " +
-        invoice.shipping.country,
-      300,
-      customerInformationTop + 30,
-    )
+    .text(invoice.shipping.name, 340, customerInformationTop)
     .moveDown();
 
   generateHr(doc, 252);
 }
 
 function generateInvoiceTable(doc, invoice) {
-  let i;
-  const invoiceTableTop = 330;
+  let currentPosition = 330;
 
   doc.font("Helvetica-Bold");
-  generateTableRow(
+  const headerHeight = generateTableRow(
     doc,
-    invoiceTableTop,
+    currentPosition,
     "Item",
     "Description",
     "Unit Cost",
     "Quantity",
-    "Line Total",
+    "Line Total"
   );
-  generateHr(doc, invoiceTableTop + 20);
+  
+  currentPosition += headerHeight + 10;
+  generateHr(doc, currentPosition);
+  currentPosition += 10;
   doc.font("Helvetica");
 
-  for (i = 0; i < invoice.items.length; i++) {
+  for (let i = 0; i < invoice.items.length; i++) {
     const item = invoice.items[i];
-    const position = invoiceTableTop + (i + 1) * 30;
-    generateTableRow(
+    const rowHeight = generateTableRow(
       doc,
-      position,
+      currentPosition,
       item.item,
       item.description,
       formatCurrency(item.amount / item.quantity),
       item.quantity,
-      formatCurrency(item.amount),
+      formatCurrency(item.amount)
     );
 
-    generateHr(doc, position + 20);
+    currentPosition += rowHeight + 10;
+    generateHr(doc, currentPosition);
+    currentPosition += 10;
   }
 
-  const subtotalPosition = invoiceTableTop + (i + 1) * 30;
+  currentPosition += 10;
   generateTableRow(
     doc,
-    subtotalPosition,
+    currentPosition,
     "",
     "",
     "Subtotal",
     "",
-    formatCurrency(invoice.subtotal),
+    formatCurrency(invoice.subtotal)
   );
 
-  const paidToDatePosition = subtotalPosition + 20;
-  generateTableRow(
-    doc,
-    paidToDatePosition,
-    "",
-    "",
-    "Paid To Date",
-    "",
-    formatCurrency(invoice.paid),
-  );
-
-  const duePosition = paidToDatePosition + 25;
+  currentPosition += 25;
   doc.font("Helvetica-Bold");
   generateTableRow(
     doc,
-    duePosition,
+    currentPosition,
     "",
     "",
     "Balance Due",
     "",
-    formatCurrency(invoice.subtotal - invoice.paid),
+    formatCurrency(invoice.subtotal)
   );
   doc.font("Helvetica");
 }
@@ -165,13 +147,36 @@ function generateTableRow(
   quantity,
   lineTotal,
 ) {
+  // Calculate the height of wrapped text
+  const descriptionHeight = doc.heightOfString(description, {
+    width: 130,
+    align: 'left'
+  });
+  
   doc
     .fontSize(10)
-    .text(item, 50, y)
-    .text(description, 150, y)
-    .text(unitCost, 280, y, { width: 90, align: "right" })
-    .text(quantity, 370, y, { width: 90, align: "right" })
-    .text(lineTotal, 0, y, { align: "right" });
+    .text(item, 50, y, {
+      width: 100,
+      align: 'left'
+    })
+    .text(description, 150, y, {
+      width: 130,
+      align: 'left'
+    })
+    .text(unitCost, 280, y, { 
+      width: 90, 
+      align: "right" 
+    })
+    .text(quantity, 370, y, { 
+      width: 90, 
+      align: "right" 
+    })
+    .text(lineTotal, 460, y, { 
+      width: 90, 
+      align: "right" 
+    });
+
+  return descriptionHeight;
 }
 
 function generateHr(doc, y) {
@@ -179,7 +184,7 @@ function generateHr(doc, y) {
 }
 
 function formatCurrency(cents) {
-  return "Rs " + cents.toFixed(2);
+  return "Rs " + cents?.toFixed(2)||0;
 }
 
 function formatDate(date) {
