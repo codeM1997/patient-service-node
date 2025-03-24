@@ -39,8 +39,6 @@ router.post("/", checkSchema(patientSchema), async (req, res) => {
   try {
     const savedPatient = await newPatient.save();
     socket.emit("patient-created", savedPatient);
-    console.log('????');
-
     return res
       .status(201)
       .send({ message: "Patient created successfully", data: savedPatient });
@@ -64,6 +62,7 @@ router.put("/:id", checkSchema(patientSchema), async (req, res) => {
     const editedPatient = await Patient.findByIdAndUpdate(parsedId, req.body, {
       new: true,
     });
+    socket.emit("patient-edited", editedPatient);
     return res.send({ message: "Patient updated successfully", data: editedPatient });
   } catch (err) {
     return res.status(400).send({ message: "Patient not found", data: err });
@@ -73,6 +72,7 @@ router.delete("/:id", async (req, res) => {
   const parsedId = req.params.id;
   try {
     const deletedPatient = await Patient.findByIdAndDelete(parsedId);
+    socket.emit("patient-deleted", deletedPatient);
     return res.send({ message: "Patient deleted successfully", data: deletedPatient });
   } catch (err) {
     return res.status(400).send({ message: "Patient not found", data: err });
