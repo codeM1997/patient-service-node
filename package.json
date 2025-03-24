@@ -2,10 +2,12 @@
   "name": "patient-service-node",
   "version": "1.0.0",
   "description": "testing",
-  "main": "index.js",
+  "main": "index.mjs",
+  "type": "module",
   "scripts": {
     "dev": "nodemon ./index.mjs",
-    "start": "node ./src/index.js",
+    "start": "node index.mjs",
+    "build": "echo 'No build step required'",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Anshul",
@@ -21,10 +23,12 @@
     "express-validator": "^7.1.0",
     "mongodb": "^6.15.0",
     "mongoose": "^8.5.2",
-    "nodemon": "^3.1.4",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "pdfkit": "^0.15.0",
     "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
   }
 }

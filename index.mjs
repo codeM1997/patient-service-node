@@ -1,5 +1,5 @@
 import express from "express";
-import mongoose, { set } from "mongoose";
+import mongoose from "mongoose";
 import baseRouter from "./routers/index.mjs";
 import cookieParser from "cookie-parser";
 import session from "express-session";
@@ -8,34 +8,34 @@ import passport from "passport";
 import "./strategies/local-strategy.mjs";
 import authRouter from "./routers/auth.mjs";
 import { createPdf } from "./utils/helpers.mjs";
-import { invoice } from "./utils/data.mjs";
 import { Server } from "socket.io";
 import cors from "cors";
 import dotenv from 'dotenv';
+import http from 'http';
 
 // Load environment variables
 dotenv.config();
+
+const app = express();
+const server = http.createServer(app);
 
 const corsOptions = {
   origin: process.env.CLIENT_URL || "http://localhost:3000",
   credentials: true,
 };
-const app = express();
 app.use(cors(corsOptions));
 
-// create a socket connection on port 1997 to listen for incoming messages and on first connection send a message to the client that connection has been established
-const io = new Server(1997, {
+// Initialize Socket.IO attached to the HTTP server
+const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
-     methods: ["GET", "POST"],
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    methods: ["GET", "POST"],
   },
 });
+
 io.on("connection", (socket) => {
-  console.log("Socket connection established",socket.id);
-  socket.emit("connection-established",socket.id);
-  // setTimeout(() => {
-  //   socket.emit("connection-established-timeout",socket.id);
-  // }, 5000);
+  console.log("Socket connection established", socket.id);
+  socket.emit("connection-established", socket.id);
 });
 
 // MongoDB Atlas connection string from environment variable
@@ -49,6 +49,7 @@ mongoose
   .catch((err) => {
     console.log("Error connecting to MongoDB", err);
   });
+
 app.use(cookieParser(process.env.COOKIE_SECRET || "some-secret-key"));
 app.use(
   session({
@@ -62,17 +63,17 @@ app.use(
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({ client: mongoose.connection.getClient() }),
-  }),
+  })
 );
+
 app.use(passport.initialize());
 app.use(passport.session());
-app.listen(9001, () => {
-  console.log(`Server is running on port 9001`);
-});
 app.use(express.json());
+
 app.get("/", (req, res) => {
   return res.send("Hello World!");
 });
+
 app.post("/downloadpdf", async (req, res) => {
   const {
     doctorName = 'John',
@@ -128,12 +129,23 @@ app.post("/downloadpdf", async (req, res) => {
     () => stream.end(),
   );
 });
+
 app.use("/api/auth", authRouter);
+
 app.use((req, res, next) => {
-  console.log("req.path", req.path);
   if (req.path.includes("/api/admins")) return next();
   if (!req.user) return res.status(401).send({ msg: "User not authenticated" });
   next();
 });
+
 app.use("/api", baseRouter);
-export default io;
+
+// Only start the server if we're not in a serverless environment
+if (process.env.NODE_ENV !== 'production') {
+  server.listen(9001, () => {
+    console.log(`Server is running on port 9001`);
+  });
+}
+
+// Export the Express app for Vercel
+export default app;
